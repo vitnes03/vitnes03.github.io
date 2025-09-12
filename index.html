@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Музыкальный бот</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div id="player">
+        <h2>Выберите трек:</h2>
+        <ul id="playlist"></ul>
+    </div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Загрузка плейлиста (пример)
+        const playlist = [
+            { title: 'Трек 1', url: 'https://example.com/stream1' },
+            { title: 'Трек 2', url: 'https://example.com/stream2' }
+        ];
+
+        const list = document.getElementById('playlist');
+        playlist.forEach(track => {
+            const li = document.createElement('li');
+            li.innerHTML = `<button onclick="play('${track.url}')">${track.title}</button>`;
+            list.appendChild(li);
+        });
+
+        function play(url) {
+            tg.sendData(JSON.stringify({ type: 'play', url }));
+            tg.close();
+        }
+    </script>
+</body>
+</html>
