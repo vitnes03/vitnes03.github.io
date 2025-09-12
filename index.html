@@ -3,279 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Музыкальное Радио</title>
+    <title>Музыкальное радио</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: #333;
+            padding: 1rem;
         }
         .container {
             width: 100%;
-            max-width: 420px;
-            padding: 1rem;
-            background-color: #ffffff;
+            max-width: 400px;
+            background-color: #242424;
             border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
         }
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            transition: border-color 0.2s;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #6366f1;
+        .btn {
+            @apply px-6 py-3 rounded-full font-bold transition-all duration-300 transform active:scale-95;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
         .btn-primary {
-            background-color: #6366f1;
-            color: #ffffff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 700;
-            transition: background-color 0.2s;
+            @apply bg-blue-600 text-white hover:bg-blue-700;
         }
-        .btn-primary:hover {
-            background-color: #4f46e5;
+        .btn-secondary {
+            @apply bg-gray-700 text-white hover:bg-gray-600;
         }
-        .playlist-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1rem;
-            background-color: #f7f8fa;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .like-btn {
-            background-color: #cbd5e1;
-            color: #4b5563;
-            padding: 0.5rem;
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
             border-radius: 50%;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .like-btn.liked {
-            background-color: #ef4444;
-            color: #ffffff;
-        }
-        .audio-player {
-            width: 100%;
-            border-radius: 0.5rem;
-        }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #6366f1;
-            animation: spin 1s ease infinite;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .like-btn {
+            @apply flex items-center justify-center p-2 rounded-full;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        .like-btn.liked {
+            color: #e0e0e0;
+            background-color: #ff4a4a;
+        }
     </style>
 </head>
-<body class="bg-gray-100">
-
-    <div class="container mx-auto p-4 md:p-6 lg:p-8">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Музыкальное Радио</h1>
+<body class="bg-gray-900 text-gray-100">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-white">Музыкальное Радио</h1>
         
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Плеер</h2>
-            <div id="player-status" class="text-center text-sm font-medium text-gray-500 mb-4">Ожидание трека...</div>
-            <audio id="audio-player" class="audio-player mb-4" controls></audio>
-            <div id="loading-spinner" class="hidden flex justify-center items-center">
-                <div class="spinner"></div>
-            </div>
-            <p id="current-track-info" class="text-center text-gray-600 font-medium"></p>
-        </div>
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Плейлист</h2>
-            <div class="flex space-x-2 mb-4">
-                <input type="text" id="url-input" class="form-input flex-grow" placeholder="Вставьте ссылку на YouTube">
-                <button id="add-btn" class="btn-primary">Добавить</button>
-            </div>
-            <div id="playlist" class="space-y-2 max-h-64 overflow-y-auto">
-                <!-- Элементы плейлиста будут добавлены сюда -->
+        <div class="flex flex-col items-center gap-4 text-center">
+            <div id="cover" class="w-32 h-32 bg-gray-700 rounded-lg animate-pulse shadow-lg"></div>
+            <div id="track-info" class="flex flex-col gap-1">
+                <div id="title" class="text-lg font-bold">Загрузка...</div>
+                <div id="artist" class="text-sm text-gray-400">Пожалуйста, подождите</div>
             </div>
         </div>
         
-        <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
-                <p id="message-text" class="text-lg font-medium mb-4"></p>
-                <button id="close-message" class="btn-primary w-full">ОК</button>
-            </div>
+        <div class="flex items-center justify-center gap-4">
+            <button id="like-btn" class="like-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            </button>
+            <audio id="audio-player" class="w-full" controls autoplay></audio>
         </div>
-
+        
+        <div id="controls" class="flex flex-col gap-4">
+            <input type="text" id="url-input" class="w-full px-4 py-3 rounded-xl bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Вставьте ссылку на YouTube...">
+            <button id="add-btn" class="btn btn-primary">Добавить в очередь</button>
+            <div class="flex justify-between gap-2">
+                <button id="radio-btn" class="btn btn-secondary w-full">Бесконечное Радио</button>
+                <button id="stop-btn" class="btn btn-secondary w-full">Остановить Радио</button>
+            </div>
+            
+            <div id="message-box" class="text-center text-sm mt-2"></div>
+        </div>
+        
+        <div class="mt-4">
+            <h2 class="text-xl font-bold mb-2">Очередь</h2>
+            <ul id="playlist" class="flex flex-col gap-2 bg-gray-800 rounded-lg p-2 max-h-40 overflow-y-auto"></ul>
+        </div>
     </div>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const audioPlayer = document.getElementById('audio-player');
             const urlInput = document.getElementById('url-input');
             const addBtn = document.getElementById('add-btn');
-            const playlistContainer = document.getElementById('playlist');
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const playerStatus = document.getElementById('player-status');
-            const currentTrackInfo = document.getElementById('current-track-info');
+            const radioBtn = document.getElementById('radio-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const playlistElement = document.getElementById('playlist');
             const messageBox = document.getElementById('message-box');
-            const messageText = document.getElementById('message-text');
-            const closeMessageBtn = document.getElementById('close-message');
+            const titleElement = document.getElementById('title');
+            const artistElement = document.getElementById('artist');
+            const likeBtn = document.getElementById('like-btn');
+            const coverElement = document.getElementById('cover');
 
+            const isRadioMode = window.location.search.includes('mode=radio');
+            const BACKEND_URL = 'http://127.0.0.1:5000'; // Замените на URL вашего сервера
+            
             let playlist = [];
             let currentTrackIndex = -1;
+            let isPlayingRadio = false;
 
-            // Display a custom message box instead of alert()
-            function showMessage(text) {
-                messageText.textContent = text;
-                messageBox.classList.remove('hidden');
-                messageBox.classList.add('flex');
-            }
+            const updateUI = () => {
+                const isRadio = isPlayingRadio || isRadioMode;
+                radioBtn.classList.toggle('hidden', isRadio);
+                stopBtn.classList.toggle('hidden', !isRadio);
+                addBtn.classList.toggle('hidden', isRadio);
+                urlInput.classList.toggle('hidden', isRadio);
+            };
 
-            closeMessageBtn.addEventListener('click', () => {
-                messageBox.classList.remove('flex');
-                messageBox.classList.add('hidden');
-            });
+            const showMessage = (message, isError = false) => {
+                messageBox.textContent = message;
+                messageBox.style.color = isError ? '#ff6b6b' : '#6b8aff';
+                setTimeout(() => messageBox.textContent = '', 3000);
+            };
 
-            // Youtube-dl API for extracting audio
-            const youtubeDlApi = "https://yt-dl.onrender.com/extract?url=";
+            const playTrack = async (track) => {
+                audioPlayer.src = track.url;
+                titleElement.textContent = track.title;
+                artistElement.textContent = track.artist;
+                coverElement.style.backgroundColor = '#3498db'; // Simple placeholder
+                coverElement.classList.remove('animate-pulse');
+                audioPlayer.play();
+                showMessage(`Сейчас играет: ${track.title}`);
+                
+                // Обновляем список воспроизведения в UI
+                if (!isPlayingRadio) {
+                    playlistElement.innerHTML = '';
+                    playlist.forEach((item, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = `${item.title} - ${item.artist}`;
+                        li.classList.add('p-2', 'rounded-md', 'bg-gray-700', 'truncate');
+                        if (index === currentTrackIndex) {
+                            li.classList.add('font-bold', 'text-blue-400');
+                        }
+                        playlistElement.appendChild(li);
+                    });
+                }
+            };
 
-            async function fetchAudioStream(url) {
+            const fetchAndPlayRadioTrack = async () => {
                 try {
-                    playerStatus.textContent = 'Загрузка...';
-                    loadingSpinner.classList.remove('hidden');
-
-                    const response = await fetch(youtubeDlApi + encodeURIComponent(url));
+                    showMessage('Загрузка следующего трека...', false);
+                    const response = await fetch(`${BACKEND_URL}/stream`);
                     if (!response.ok) {
-                        throw new Error('Не удалось получить информацию о треке.');
+                        throw new Error('Не удалось получить трек с сервера.');
                     }
                     const data = await response.json();
-                    
-                    loadingSpinner.classList.add('hidden');
-                    playerStatus.textContent = 'Готово';
-
-                    return { 
-                        url: data.url, 
-                        title: data.title || 'Неизвестный трек',
-                        artist: data.artist || 'Неизвестный исполнитель'
-                    };
-                } catch (error) {
-                    loadingSpinner.classList.add('hidden');
-                    playerStatus.textContent = 'Ошибка загрузки';
-                    console.error('Ошибка:', error);
-                    showMessage('Произошла ошибка при загрузке трека. Пожалуйста, проверьте ссылку.');
-                    return null;
-                }
-            }
-
-            async function playTrack(index) {
-                if (index < 0 || index >= playlist.length) {
-                    currentTrackIndex = -1;
-                    audioPlayer.src = '';
-                    currentTrackInfo.textContent = 'Плейлист пуст.';
-                    playerStatus.textContent = 'Ожидание трека...';
-                    return;
-                }
-                
-                currentTrackIndex = index;
-                const track = playlist[currentTrackIndex];
-                
-                // Fetch new stream URL only if needed
-                if (!track.streamUrl) {
-                    const audioData = await fetchAudioStream(track.url);
-                    if (audioData) {
-                        track.streamUrl = audioData.url;
-                        track.title = audioData.title;
-                        track.artist = audioData.artist;
-                    } else {
-                        // Skip to next track on failure
-                        playNext();
-                        return;
+                    if (data.error) {
+                        throw new Error(data.error);
                     }
+                    await playTrack(data);
+                } catch (error) {
+                    showMessage(`Ошибка: ${error.message}`, true);
+                    isPlayingRadio = false;
+                    updateUI();
                 }
-                
-                audioPlayer.src = track.streamUrl;
-                currentTrackInfo.textContent = `${track.title} - ${track.artist}`;
-                audioPlayer.play();
-                playerStatus.textContent = 'Воспроизведение...';
-            }
+            };
 
-            function playNext() {
-                if (playlist.length === 0) {
-                    return;
-                }
-                const nextIndex = (currentTrackIndex + 1) % playlist.length;
-                playTrack(nextIndex);
-            }
+            const startRadio = () => {
+                isPlayingRadio = true;
+                updateUI();
+                fetchAndPlayRadioTrack();
+            };
+
+            const stopRadio = () => {
+                isPlayingRadio = false;
+                audioPlayer.pause();
+                showMessage('Радио остановлено', false);
+                updateUI();
+            };
 
             addBtn.addEventListener('click', async () => {
-                const url = urlInput.value.trim();
-                if (url) {
-                    const trackExists = playlist.some(t => t.url === url);
-                    if (trackExists) {
-                        showMessage('Этот трек уже есть в плейлисте.');
-                        return;
+                const url = urlInput.value;
+                if (!url) {
+                    showMessage('Пожалуйста, вставьте ссылку', true);
+                    return;
+                }
+                
+                try {
+                    showMessage('Загрузка...', false);
+                    const response = await fetch(`${BACKEND_URL}/extract?url=${encodeURIComponent(url)}`);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
                     }
                     
-                    const audioData = await fetchAudioStream(url);
-                    if (audioData) {
-                        const newTrack = {
-                            url: url,
-                            streamUrl: audioData.url,
-                            title: audioData.title,
-                            artist: audioData.artist,
-                            likes: 0
-                        };
-                        playlist.push(newTrack);
-                        renderPlaylist();
-                        urlInput.value = '';
-                        if (currentTrackIndex === -1) {
-                            playTrack(0);
-                        }
-                    }
+                    playlist.push(data);
+                    currentTrackIndex = playlist.length - 1;
+                    playTrack(data);
+                    urlInput.value = '';
+                } catch (error) {
+                    showMessage(`Ошибка: ${error.message}`, true);
                 }
             });
 
-            function renderPlaylist() {
-                playlistContainer.innerHTML = '';
-                playlist.forEach((track, index) => {
-                    const trackElement = document.createElement('div');
-                    trackElement.className = 'playlist-item shadow-sm';
-                    trackElement.innerHTML = `
-                        <div class="flex items-center flex-grow cursor-pointer" onclick="playTrack(${index})">
-                            <span class="text-gray-800 font-medium truncate">${track.title}</span>
-                        </div>
-                        <button class="like-btn" data-index="${index}">❤️</button>
-                    `;
-                    
-                    const likeBtn = trackElement.querySelector('.like-btn');
-                    likeBtn.addEventListener('click', () => {
-                        track.likes++;
-                        // You could add logic here to update UI or send data to a backend
-                        showMessage(`Вы оценили трек "${track.title}"!`);
-                    });
-
-                    playlistContainer.appendChild(trackElement);
-                });
-            }
-
             audioPlayer.addEventListener('ended', () => {
-                playNext();
+                if (isPlayingRadio) {
+                    fetchAndPlayRadioTrack();
+                } else if (playlist.length > 0 && currentTrackIndex < playlist.length - 1) {
+                    currentTrackIndex++;
+                    playTrack(playlist[currentTrackIndex]);
+                }
             });
 
-            // Expose playTrack to global scope for onclick in HTML
-            window.playTrack = playTrack;
+            radioBtn.addEventListener('click', startRadio);
+            stopBtn.addEventListener('click', stopRadio);
 
+            // Если мини-приложение запущено в режиме "радио" (через /radio)
+            if (isRadioMode) {
+                startRadio();
+            }
+
+            // Добавляем обработчик для кнопки "лайк"
+            likeBtn.addEventListener('click', () => {
+                likeBtn.classList.toggle('liked');
+            });
+            
+            updateUI(); // Инициализация UI
         });
     </script>
 </body>
