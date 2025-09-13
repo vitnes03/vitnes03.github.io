@@ -123,9 +123,9 @@
         let playlist = [];
         let isFetching = false;
         
-        // API key from Pixabay. You can get your own key from your Pixabay account.
+        // Use the Pixabay Audio API endpoint
         const PIXABAY_API_KEY = '25547466-417163013898b3f17d3d2a71d';
-        const PIXABAY_API_URL = `https://pixabay.com/api/videos/?key=${PIXABAY_API_KEY}`;
+        const PIXABAY_AUDIO_API_URL = `https://pixabay.com/api/audios/?key=${PIXABAY_API_KEY}`;
 
         window.initializeApp = (firestoreDb, currentUserId) => {
             db = firestoreDb;
@@ -166,23 +166,23 @@
             loadingEl.style.display = 'block';
 
             try {
-                // Fetch a new song from Pixabay's API
-                const response = await fetch(`https://pixabay.com/api/videos/?key=${PIXABAY_API_KEY}&q=music&per_page=1&page=${Math.floor(Math.random() * 100) + 1}`);
+                // Fetch a new song from Pixabay's AUDIO API
+                const randomPage = Math.floor(Math.random() * 100) + 1;
+                const response = await fetch(`${PIXABAY_AUDIO_API_URL}&q=music&per_page=1&page=${randomPage}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch music from API');
                 }
                 const data = await response.json();
                 
-                // We're using a video API for demonstration, so we'll pick the first video and use its large mp4 file as the audio source.
-                // In a real app, you would use a music API like Spotify or SoundCloud.
-                const video = data.hits[0];
-                if (!video) throw new Error('No video found in API response');
+                const track = data.hits[0];
+                if (!track) throw new Error('No audio track found in API response');
                 
                 const newSong = {
-                    id: video.id.toString(),
-                    title: video.tags,
-                    artist: 'Pixabay Artist',
-                    audioUrl: video.videos.large.url
+                    id: track.id.toString(),
+                    title: track.tags,
+                    artist: track.user,
+                    // Use the `preview_url` which is a proper audio file
+                    audioUrl: track.previewURL 
                 };
 
                 // Add the new song to the playlist and play it
@@ -289,5 +289,6 @@
     </script>
 </body>
 </html>
+
 
 
