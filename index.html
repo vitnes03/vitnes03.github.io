@@ -154,23 +154,32 @@
             };
             
             const fetchPlaylistData = async () => {
-                try {
-                    const response = await fetch('http://127.0.0.1:5000/api/playlist');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    songs = await response.json();
-
-                    // Добавляем трек с вашей ссылкой для демонстрации
-                    songs.push({
+                // This is a temporary hardcoded playlist to demonstrate functionality.
+                // For a real application, this data should be fetched from a server.
+                songs = [
+                    {
                         "title": "Демо-трек",
                         "artist": "Неизвестный исполнитель",
                         "url": "https://zaycev.cdn.zerocdn.com/ef2d74f97b3d532e97686aa562ecb668:2025091308/track/25045916.mp3",
                         "image": "https://placehold.co/64x64/FFA500/FFFFFF?text=Demo"
-                    });
+                    },
+                    {
+                        "title": "Песня 2",
+                        "artist": "Исполнитель 2",
+                        "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+                        "image": "https://placehold.co/64x64/3498DB/FFFFFF?text=Song+2"
+                    },
+                    {
+                        "title": "Песня 3",
+                        "artist": "Исполнитель 3",
+                        "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+                        "image": "https://placehold.co/64x64/E74C3C/FFFFFF?text=Song+3"
+                    }
+                ];
 
-                } catch (error) {
-                    console.error('Ошибка при получении плейлиста:', error);
+                // Play the first track immediately to show the UI works
+                if (songs.length > 0) {
+                    playTrack(0);
                 }
             };
 
