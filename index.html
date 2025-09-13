@@ -160,6 +160,15 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     songs = await response.json();
+
+                    // Добавляем трек с вашей ссылкой для демонстрации
+                    songs.push({
+                        "title": "Демо-трек",
+                        "artist": "Неизвестный исполнитель",
+                        "url": "https://zaycev.cdn.zerocdn.com/ef2d74f97b3d532e97686aa562ecb668:2025091308/track/25045916.mp3",
+                        "image": "https://placehold.co/64x64/FFA500/FFFFFF?text=Demo"
+                    });
+
                 } catch (error) {
                     console.error('Ошибка при получении плейлиста:', error);
                 }
