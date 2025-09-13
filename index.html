@@ -130,27 +130,29 @@
             let currentTrackIndex = -1;
             let songs = [];
 
-            const fetchCardData = async () => {
-                try {
-                    const response = await fetch('http://127.0.0.1:5000/api/cards');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+            // Hardcode card data since the server is not accessible
+            const setCardData = () => {
+                const data = {
+                    recommendations: {
+                        title: "Наши рекомендации",
+                        subtitle: "Лучшие подборки для вас"
+                    },
+                    new_releases: {
+                        title: "Новинки",
+                        subtitle: "Свежие треки этой недели"
+                    },
+                    my_playlist: {
+                        title: "Плейлист дня",
+                        subtitle: "Ваши любимые песни"
                     }
-                    const data = await response.json();
-                    
-                    recommendationsTitle.textContent = data.recommendations.title;
-                    recommendationsSubtitle.textContent = data.recommendations.subtitle;
-                    newReleasesTitle.textContent = data.new_releases.title;
-                    newReleasesSubtitle.textContent = data.new_releases.subtitle;
-                    myPlaylistTitle.textContent = data.my_playlist.title;
-                    myPlaylistSubtitle.textContent = data.my_playlist.subtitle;
-
-                } catch (error) {
-                    console.error('Ошибка при получении данных:', error);
-                    recommendationsTitle.textContent = 'Ошибка';
-                    newReleasesTitle.textContent = 'Ошибка';
-                    myPlaylistTitle.textContent = 'Ошибка';
-                }
+                };
+                
+                recommendationsTitle.textContent = data.recommendations.title;
+                recommendationsSubtitle.textContent = data.recommendations.subtitle;
+                newReleasesTitle.textContent = data.new_releases.title;
+                newReleasesSubtitle.textContent = data.new_releases.subtitle;
+                myPlaylistTitle.textContent = data.my_playlist.title;
+                myPlaylistSubtitle.textContent = data.my_playlist.subtitle;
             };
             
             const fetchPlaylistData = async () => {
@@ -160,7 +162,7 @@
                     {
                         "title": "Демо-трек",
                         "artist": "Неизвестный исполнитель",
-                        "url": "https://zaycev.cdn.zerocdn.com/ef2d74f97b3d532e97686aa562ecb668:2025091308/track/25045916.mp3",
+                        "url": "https://dl.zaycev.net/track_auth/25045916/AFhjK2XVAxD4D4oo3SVtdygdtA4x5tVHMkb3mvZg4N7rX8C2S5XjsTHV293YuMg4xA1MF98MmYzoJWppqLmvG9FsShMPxix89oq1ViBCUuNTzRtAJpEy1uUTzXAGGz1FrKUJjSDEehhmvLKmfRUyNr4yS9Ku1nPX5sRLwUNaSHoqWwmQoCSDjZDyjkU86sQFvf8B5KDso9yorCVX2qyA2EkCAYWyyrGNAZSqQPggUAZ7y7pocih7Y9fSCphCFfpVKk5vzQZzPx2hLG5uawbkVuBhM6BYvApTgUKK2Vw1ez1mBTiYQF9HDYJQd2xJLUNxXaiwhDsiFnHxYHnSruzfd6coA13QHg",
                         "image": "https://placehold.co/64x64/FFA500/FFFFFF?text=Demo"
                     },
                     {
@@ -255,7 +257,7 @@
                 audio.currentTime = seekTime;
             });
             
-            fetchCardData();
+            setCardData();
             fetchPlaylistData();
         });
     </script>
