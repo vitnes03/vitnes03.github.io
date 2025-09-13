@@ -161,10 +161,10 @@
                     }
                     songs = await response.json();
                     if (songs.length > 0) {
-                        playTrack(0);
-                        audio.pause();
-                        playIcon.classList.remove('hidden');
-                        pauseIcon.classList.add('hidden');
+                        currentSongTitle.textContent = songs[0].title;
+                        currentSongArtist.textContent = songs[0].artist;
+                        currentSongArt.src = songs[0].image;
+                        currentTrackIndex = 0;
                     }
                 } catch (error) {
                     console.error('Ошибка при получении плейлиста:', error);
@@ -189,7 +189,11 @@
 
             const togglePlayPause = () => {
                 if (audio.paused) {
-                    audio.play();
+                    if (currentTrackIndex === -1 && songs.length > 0) {
+                        playTrack(0);
+                    } else {
+                        audio.play();
+                    }
                     playIcon.classList.add('hidden');
                     pauseIcon.classList.remove('hidden');
                 } else {
@@ -206,13 +210,7 @@
             };
 
             // Event Listeners for player controls
-            playPauseBtn.addEventListener('click', () => {
-                if (currentTrackIndex === -1) {
-                    playTrack(0);
-                } else {
-                    togglePlayPause();
-                }
-            });
+            playPauseBtn.addEventListener('click', togglePlayPause);
 
             nextBtn.addEventListener('click', () => {
                 const nextIndex = (currentTrackIndex + 1) % songs.length;
