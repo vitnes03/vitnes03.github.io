@@ -160,12 +160,6 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     songs = await response.json();
-                    if (songs.length > 0) {
-                        currentSongTitle.textContent = songs[0].title;
-                        currentSongArtist.textContent = songs[0].artist;
-                        currentSongArt.src = songs[0].image;
-                        currentTrackIndex = 0;
-                    }
                 } catch (error) {
                     console.error('Ошибка при получении плейлиста:', error);
                 }
@@ -189,13 +183,15 @@
 
             const togglePlayPause = () => {
                 if (audio.paused) {
+                    // Start playing the first song if no song has been played yet
                     if (currentTrackIndex === -1 && songs.length > 0) {
                         playTrack(0);
-                    } else {
+                    } else if (currentTrackIndex !== -1) {
+                        // Otherwise, just resume playing the current song
                         audio.play();
+                        playIcon.classList.add('hidden');
+                        pauseIcon.classList.remove('hidden');
                     }
-                    playIcon.classList.add('hidden');
-                    pauseIcon.classList.remove('hidden');
                 } else {
                     audio.pause();
                     playIcon.classList.remove('hidden');
