@@ -3,404 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Музыкальное мини-приложение</title>
+    <title>Музыкальные карточки</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0d0d0d; color: #f0f0f0; }
-        .song-item { transition: transform 0.2s, background-color 0.2s; }
-        .song-item:hover { transform: scale(1.02); background-color: #2a2a2a; }
-        .like-button-filled { color: #ef4444; }
-        .like-button-empty { color: #f0f0f0; }
-        .player-bar { backdrop-filter: blur(10px); background-color: rgba(255, 255, 255, 0.1); }
-        .scrollable-list::-webkit-scrollbar { width: 8px; }
-        .scrollable-list::-webkit-scrollbar-track { background: transparent; }
-        .scrollable-list::-webkit-scrollbar-thumb { background-color: #4a4a4a; border-radius: 4px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+        }
+        .player-bar {
+            backdrop-filter: blur(10px);
+            background-color: rgba(26, 32, 44, 0.7);
+        }
     </style>
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // Log level for debugging
-        setLogLevel('Debug');
-
-        // Global variables provided by the canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db, auth, userId;
-
-        window.firebaseInit = async () => {
-            if (!firebaseConfig) {
-                console.error("Firebase config is not available. Please ensure it's provided.");
-                return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // Sign in the user with the provided custom token or anonymously
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                document.getElementById('user-id').textContent = `Ваш ID: ${userId}`;
-                console.log("Firebase initialized and user authenticated:", userId);
-
-                // Start the app logic after Firebase is ready
-                window.initializeApp(db, userId);
-
-            } catch (error) {
-                console.error("Error during Firebase initialization or authentication:", error);
-            }
-        };
-    </script>
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col items-center">
+<body class="bg-gray-950 flex flex-col items-center min-h-screen p-4">
 
-    <div class="w-full max-w-lg p-4 flex-grow flex flex-col">
-        <!-- Header Section -->
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-3xl font-bold">Радио</h1>
-            <div id="user-id" class="text-sm text-gray-400 truncate max-w-[150px]"></div>
-        </div>
-
-        <!-- Start Button -->
-        <div id="start-screen" class="flex-grow flex flex-col items-center justify-center text-center">
-            <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">Начать радио</button>
-            <p class="mt-4 text-gray-400">Нажмите, чтобы начать бесконечный поток музыки.</p>
-        </div>
-
-        <!-- Main Content (Hidden until start) -->
-        <div id="main-content" class="flex-grow flex flex-col hidden">
-            <!-- Tabs for Navigation -->
-            <div class="flex justify-around mb-4 bg-gray-800 rounded-lg p-1">
-                <button id="radio-tab" class="flex-1 py-2 px-4 rounded-lg text-center font-medium bg-gray-700 text-white">Радио</button>
-                <button id="liked-tab" class="flex-1 py-2 px-4 rounded-lg text-center font-medium text-gray-400">Понравившееся</button>
-            </div>
-
-            <!-- Radio View -->
-            <div id="radio-view" class="scrollable-list flex-grow overflow-y-auto space-y-2 mb-20 pb-4 rounded-xl">
-                <div id="loading-radio" class="text-center text-gray-400 mt-8">Загрузка музыки...</div>
-            </div>
-
-            <!-- Liked Songs View -->
-            <div id="liked-view" class="scrollable-list flex-grow overflow-y-auto space-y-2 mb-20 pb-4 rounded-xl hidden">
-                <div id="loading-liked" class="text-center text-gray-400 mt-8">Загрузка...</div>
-            </div>
-        </div>
-
-        <!-- Music Player Bar -->
-        <div id="player-bar" class="player-bar fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto p-4 flex items-center justify-between rounded-t-2xl shadow-lg hidden">
-            <div class="flex items-center space-x-4">
-                <div class="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-lg font-bold">
-                    <img id="current-song-art" src="https://placehold.co/64x64/262626/808080?text=♫" alt="Album Art" class="rounded-lg">
-                </div>
+    <div class="grid grid-cols-2 gap-4 w-full max-w-xl flex-grow pb-24">
+        <!-- Левая колонка -->
+        <div class="col-span-2 md:col-span-1 flex flex-col gap-4">
+            <!-- Карточка "Рекомендации" -->
+            <div class="bg-orange-600 rounded-2xl p-6 shadow-xl flex justify-between items-center text-white min-h-[12rem] md:min-h-0">
                 <div>
-                    <div id="current-song-title" class="text-lg font-semibold truncate max-w-[150px]">Музыка...</div>
-                    <div id="current-song-artist" class="text-sm text-gray-400 truncate max-w-[150px]">Исполнитель...</div>
+                    <h2 id="recommendations-title" class="text-3xl font-bold">Загрузка...</h2>
+                    <p id="recommendations-subtitle" class="text-sm opacity-80 mt-1"></p>
+                </div>
+                <div class="w-12 h-12 flex items-center justify-center rounded-full bg-white bg-opacity-30">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white">
+                        <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.715 1.295 2.561 0 3.276l-11.54 6.348C6.029 20.33 4.5 19.426 4.5 18.001V5.653Z" clip-rule="evenodd" />
+                    </svg>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <button id="play-pause-btn" class="text-3xl p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
-                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
-                      <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.715 1.295 2.561 0 3.276l-11.54 6.348C6.029 20.33 4.5 19.426 4.5 18.001V5.653Z" clip-rule="evenodd" />
+
+            <!-- Карточка "Наши новинки" -->
+            <div class="bg-blue-600 rounded-2xl p-6 shadow-xl flex justify-between items-center text-white min-h-[12rem] md:min-h-0">
+                <div>
+                    <h2 id="new-releases-title" class="text-3xl font-bold">Загрузка...</h2>
+                    <p id="new-releases-subtitle" class="text-sm opacity-80 mt-1"></p>
+                </div>
+                <div class="w-12 h-12 flex items-center justify-center rounded-full bg-white bg-opacity-30">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white">
+                        <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.715 1.295 2.561 0 3.276l-11.54 6.348C6.029 20.33 4.5 19.426 4.5 18.001V5.653Z" clip-rule="evenodd" />
                     </svg>
-                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 hidden">
-                      <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка -->
+        <div class="col-span-2 md:col-span-1">
+            <!-- Карточка "Мой плейлист дня" -->
+            <div class="bg-pink-600 rounded-2xl p-6 shadow-xl flex justify-between items-center text-white w-full h-full min-h-[12rem] md:min-h-0">
+                <div>
+                    <h2 id="my-playlist-title" class="text-3xl font-bold">Загрузка...</h2>
+                    <p id="my-playlist-subtitle" class="text-sm opacity-80 mt-1"></p>
+                </div>
+                <div class="self-center mt-auto">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-white bg-opacity-30">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white">
+                            <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.715 1.295 2.561 0 3.276l-11.54 6.348C6.029 20.33 4.5 19.426 4.5 18.001V5.653Z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script type="text/javascript">
+    <!-- Music Player Bar -->
+    <div id="player-bar" class="player-bar fixed bottom-0 w-full max-w-xl p-4 flex flex-col space-y-2 rounded-t-2xl shadow-lg">
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-gray-700 rounded-lg flex-shrink-0">
+                <img id="current-song-art" src="https://placehold.co/64x64/262626/808080?text=♫" alt="Album Art" class="rounded-lg w-full h-full object-cover">
+            </div>
+            <div class="flex-grow min-w-0">
+                <div id="current-song-title" class="text-lg font-semibold truncate">Нет песни</div>
+                <div id="current-song-artist" class="text-sm text-gray-400 truncate"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="prev-btn" class="p-2 rounded-full text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M10.72 2.25a.75.75 0 0 0-1.06 0l-7.5 7.5a.75.75 0 0 0 0 1.06l7.5 7.5a.75.75 0 0 0 1.06-1.06L5.81 12h14.44a.75.75 0 0 0 0-1.5H5.81l4.91-4.97a.75.75 0 0 0 0-1.06Z" clip-rule="evenodd" /></svg>
+                </button>
+                <button id="play-pause-btn" class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 transition-colors text-white">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8">
+                        <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.715 1.295 2.561 0 3.276l-11.54 6.348C6.029 20.33 4.5 19.426 4.5 18.001V5.653Z" clip-rule="evenodd" />
+                    </svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 hidden">
+                        <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <button id="next-btn" class="p-2 rounded-full text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M13.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L11.69 12 4.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M19.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 1 1-1.06-1.06L17.69 12l-5.47-5.47a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clip-rule="evenodd" /></svg>
+                </button>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span id="current-time" class="text-xs text-gray-400">0:00</span>
+            <div id="progress-bar-container" class="flex-grow h-1 bg-gray-600 rounded-full cursor-pointer">
+                <div id="progress-bar" class="h-1 bg-blue-500 rounded-full" style="width: 0%;"></div>
+            </div>
+            <span id="duration" class="text-xs text-gray-400">0:00</span>
+        </div>
+    </div>
+
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
-            window.firebaseInit();
-        });
+            const recommendationsTitle = document.getElementById('recommendations-title');
+            const recommendationsSubtitle = document.getElementById('recommendations-subtitle');
+            const newReleasesTitle = document.getElementById('new-releases-title');
+            const newReleasesSubtitle = document.getElementById('new-releases-subtitle');
+            const myPlaylistTitle = document.getElementById('my-playlist-title');
+            const myPlaylistSubtitle = document.getElementById('my-playlist-subtitle');
 
-        const startScreen = document.getElementById('start-screen');
-        const startBtn = document.getElementById('start-btn');
-        const mainContent = document.getElementById('main-content');
-        const playerBar = document.getElementById('player-bar');
-        const radioTab = document.getElementById('radio-tab');
-        const likedTab = document.getElementById('liked-tab');
-        const radioView = document.getElementById('radio-view');
-        const likedView = document.getElementById('liked-view');
-        const loadingRadioEl = document.getElementById('loading-radio');
-        const loadingLikedEl = document.getElementById('loading-liked');
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const currentSongTitleEl = document.getElementById('current-song-title');
-        const currentSongArtistEl = document.getElementById('current-song-artist');
-        
-        let db, userId;
-        let likedSongs = new Set();
-        let audioPlayer = new Audio();
-        let isPlaying = false;
-        let playlist = [];
-        let isFetching = false;
-        
-        // Use the Pixabay Audio API endpoint
-        const PIXABAY_API_KEY = '25547466-417163013898b3f17d3d2a71d';
-        const PIXABAY_AUDIO_API_URL = `https://pixabay.com/api/audios/?key=${PIXABAY_API_KEY}`;
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const currentSongTitle = document.getElementById('current-song-title');
+            const currentSongArtist = document.getElementById('current-song-artist');
+            const currentSongArt = document.getElementById('current-song-art');
+            const currentTimeEl = document.getElementById('current-time');
+            const durationEl = document.getElementById('duration');
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarContainer = document.getElementById('progress-bar-container');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
 
-        window.initializeApp = (firestoreDb, currentUserId) => {
-            db = firestoreDb;
-            userId = currentUserId;
-            
-            // Listeners for tabs
-            radioTab.addEventListener('click', () => {
-                showView('radio');
-            });
+            let audio = new Audio();
+            let currentTrackIndex = -1;
+            let songs = [];
 
-            likedTab.addEventListener('click', () => {
-                showView('liked');
-            });
-            
-            startBtn.addEventListener('click', () => {
-                startScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                playerBar.classList.remove('hidden');
-                fetchNextSong(true);
-            });
+            const fetchCardData = async () => {
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/api/cards');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    recommendationsTitle.textContent = data.recommendations.title;
+                    recommendationsSubtitle.textContent = data.recommendations.subtitle;
+                    newReleasesTitle.textContent = data.new_releases.title;
+                    newReleasesSubtitle.textContent = data.new_releases.subtitle;
+                    myPlaylistTitle.textContent = data.my_playlist.title;
+                    myPlaylistSubtitle.textContent = data.my_playlist.subtitle;
 
-            // Set up real-time listener for user's liked songs
-            const userLikesPath = `/artifacts/${appId}/users/${userId}/liked_songs`;
-            const docRef = doc(db, userLikesPath, 'likes');
-
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    likedSongs = new Set(docSnap.data().songIds || []);
-                    console.log("Updated liked songs from Firestore:", likedSongs);
-                    renderSongList(playlist, radioView, 'radio');
-                    fetchLikedSongs(); // Fetch and render liked songs
-                } else {
-                    console.log("No liked songs document found for this user. Creating a new one.");
-                    likedSongs = new Set();
-                    setDoc(docRef, { songIds: [] }, { merge: true });
+                } catch (error) {
+                    console.error('Ошибка при получении данных:', error);
+                    recommendationsTitle.textContent = 'Ошибка';
+                    newReleasesTitle.textContent = 'Ошибка';
+                    myPlaylistTitle.textContent = 'Ошибка';
                 }
-            }, (error) => {
-                console.error("Error listening to liked songs:", error);
-            });
+            };
             
-            // Setup audio player
-            audioPlayer.volume = 0.5;
-            audioPlayer.loop = false;
-            audioPlayer.addEventListener('ended', () => {
-                fetchNextSong(true); // Play next song from API when current one ends
-            });
+            const fetchPlaylistData = async () => {
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/api/playlist');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    songs = await response.json();
+                    if (songs.length > 0) {
+                        playTrack(0);
+                        audio.pause();
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при получении плейлиста:', error);
+                }
+            };
 
-            // Player controls
+            const playTrack = (index) => {
+                if (index < 0 || index >= songs.length) return;
+                currentTrackIndex = index;
+                const track = songs[currentTrackIndex];
+                
+                audio.src = track.url;
+                audio.play();
+                
+                currentSongTitle.textContent = track.title;
+                currentSongArtist.textContent = track.artist;
+                currentSongArt.src = track.image;
+                
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            };
+
+            const togglePlayPause = () => {
+                if (audio.paused) {
+                    audio.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                } else {
+                    audio.pause();
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                }
+            };
+
+            const formatTime = (seconds) => {
+                const minutes = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+            };
+
+            // Event Listeners for player controls
             playPauseBtn.addEventListener('click', () => {
-                if (isPlaying) {
-                    audioPlayer.pause();
-                    isPlaying = false;
+                if (currentTrackIndex === -1) {
+                    playTrack(0);
                 } else {
-                    audioPlayer.play();
-                    isPlaying = true;
+                    togglePlayPause();
                 }
-                updatePlayerUI();
             });
-        };
 
-        const showView = (viewName) => {
-            radioView.classList.add('hidden');
-            likedView.classList.add('hidden');
-            radioTab.classList.remove('bg-gray-700', 'text-white');
-            likedTab.classList.remove('bg-gray-700', 'text-white');
-            radioTab.classList.add('text-gray-400');
-            likedTab.classList.add('text-gray-400');
-
-            if (viewName === 'radio') {
-                radioView.classList.remove('hidden');
-                radioTab.classList.add('bg-gray-700', 'text-white');
-                radioTab.classList.remove('text-gray-400');
-            } else if (viewName === 'liked') {
-                likedView.classList.remove('hidden');
-                likedTab.classList.add('bg-gray-700', 'text-white');
-                likedTab.classList.remove('text-gray-400');
-            }
-        };
-
-        const fetchNextSong = async (autoplay = false) => {
-            if (isFetching) return;
-            isFetching = true;
-            loadingRadioEl.style.display = 'block';
-
-            try {
-                // Fetch a new song from Pixabay's AUDIO API
-                const randomPage = Math.floor(Math.random() * 100) + 1;
-                const response = await fetch(`${PIXABAY_AUDIO_API_URL}&q=music&per_page=1&page=${randomPage}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch music from API');
-                }
-                const data = await response.json();
-                
-                const track = data.hits[0];
-                if (!track) throw new Error('No audio track found in API response');
-                
-                const newSong = {
-                    id: track.id.toString(),
-                    title: track.tags,
-                    artist: track.user,
-                    audioUrl: track.previewURL 
-                };
-
-                // Add the new song to the playlist and play it
-                playlist.unshift(newSong); // Add to the beginning of the list
-                if (autoplay) {
-                    playCurrentSong(newSong);
-                }
-
-            } catch (error) {
-                console.error("Error fetching new song:", error);
-                loadingRadioEl.textContent = 'Ошибка загрузки музыки. Попробуйте еще раз.';
-            } finally {
-                loadingRadioEl.style.display = 'none';
-                isFetching = false;
-            }
-        };
-
-        const fetchLikedSongs = () => {
-            loadingLikedEl.style.display = 'block';
-            likedView.innerHTML = ''; // Clear liked songs list
-
-            // Since we only store IDs, we can't fetch the full song data
-            // In a real app, you would fetch the full song objects here
-            if (likedSongs.size > 0) {
-                 likedSongs.forEach(songId => {
-                    const songItem = document.createElement('div');
-                    songItem.className = `song-item p-4 rounded-xl flex items-center justify-between cursor-pointer bg-red-900`;
-                    songItem.innerHTML = `
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-gray-700 rounded-lg flex-shrink-0">
-                                <img src="https://placehold.co/48x48/262626/808080?text=♫" alt="Album Art" class="rounded-lg">
-                            </div>
-                            <div class="flex-grow">
-                                <div class="text-lg font-medium">Песня ID: ${songId}</div>
-                                <div class="text-sm text-gray-400">Исполнитель...</div>
-                            </div>
-                        </div>
-                        <button class="like-btn p-2 rounded-full hover:bg-gray-700 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 like-icon like-button-filled">
-                                <path d="M12.923 2.25c-1.157 0-2.313.255-3.407.75l-1.472.645A4.47 4.47 0 0 0 6.3 3.992m-.75 16.5c0 1.242-1.008 2.25-2.25 2.25S1.05 20.492 1.05 19.25M15 9.75a.75.75 0 0 1 .75-.75H18a2.25 2.25 0 0 1 2.25 2.25v4.5A2.25 2.25 0 0 1 18 18h-2.25a.75.75 0 0 1-.75-.75V9.75Z" />
-                                <path d="m11.645 20.91-.007.003-.025.011a24.285 24.285 0 0 1-5.455 1.31A8.964 8.964 0 0 1 2.25 15.75V9.456c0-1.282.903-2.324 2.112-2.519 1.125-.175 2.28-.455 3.334-.823m3.056-11.666a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.456Z" />
-                            </svg>
-                        </button>
-                    `;
-                    likedView.appendChild(songItem);
-                 });
-                 loadingLikedEl.style.display = 'none';
-            } else {
-                loadingLikedEl.textContent = 'У вас пока нет понравившихся песен.';
-            }
-        };
-
-        const playCurrentSong = (song) => {
-            audioPlayer.src = song.audioUrl;
-            audioPlayer.play();
-            isPlaying = true;
-            updatePlayerUI(song);
-            renderSongList(playlist, radioView, 'radio');
-        };
-
-        const updatePlayerUI = () => {
-            if (playlist.length === 0) {
-                currentSongTitleEl.textContent = 'Нет песен.';
-                currentSongArtistEl.textContent = '';
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-                return;
-            }
-            const song = playlist[0];
-            currentSongTitleEl.textContent = song.title;
-            currentSongArtistEl.textContent = song.artist;
-            playIcon.classList.toggle('hidden', isPlaying);
-            pauseIcon.classList.toggle('hidden', !isPlaying);
-        };
-
-        const renderSongList = (list, container, type) => {
-            container.innerHTML = '';
-            
-            if (list.length === 0) {
-                 const noSongsMessage = document.createElement('div');
-                 noSongsMessage.className = 'text-center text-gray-400 mt-8';
-                 noSongsMessage.textContent = type === 'radio' ? 'Загрузка музыки...' : 'У вас пока нет понравившихся песен.';
-                 container.appendChild(noSongsMessage);
-                 return;
-            }
-            
-            list.forEach(song => {
-                const isLiked = likedSongs.has(song.id);
-                const songItem = document.createElement('div');
-                songItem.className = `song-item p-4 rounded-xl flex items-center justify-between cursor-pointer ${isLiked ? 'bg-red-900' : 'bg-gray-800'}`;
-                songItem.setAttribute('data-id', song.id);
-                
-                songItem.innerHTML = `
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-gray-700 rounded-lg flex-shrink-0">
-                            <img src="https://placehold.co/48x48/262626/808080?text=♫" alt="Album Art" class="rounded-lg">
-                        </div>
-                        <div class="flex-grow">
-                            <div class="text-lg font-medium">${song.title}</div>
-                            <div class="text-sm text-gray-400">${song.artist}</div>
-                        </div>
-                    </div>
-                    <button class="like-btn p-2 rounded-full hover:bg-gray-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 like-icon ${isLiked ? 'like-button-filled' : 'like-button-empty'}">
-                            <path d="M12.923 2.25c-1.157 0-2.313.255-3.407.75l-1.472.645A4.47 4.47 0 0 0 6.3 3.992m-.75 16.5c0 1.242-1.008 2.25-2.25 2.25S1.05 20.492 1.05 19.25M15 9.75a.75.75 0 0 1 .75-.75H18a2.25 2.25 0 0 1 2.25 2.25v4.5A2.25 2.25 0 0 1 18 18h-2.25a.75.75 0 0 1-.75-.75V9.75Z" />
-                            <path d="m11.645 20.91-.007.003-.025.011a24.285 24.285 0 0 1-5.455 1.31A8.964 8.964 0 0 1 2.25 15.75V9.456c0-1.282.903-2.324 2.112-2.519 1.125-.175 2.28-.455 3.334-.823m3.056-11.666a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.456Z" />
-                        </svg>
-                    </button>
-                `;
-                const likeBtn = songItem.querySelector('.like-btn');
-                likeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleLike(song.id);
-                });
-                container.appendChild(songItem);
+            nextBtn.addEventListener('click', () => {
+                const nextIndex = (currentTrackIndex + 1) % songs.length;
+                playTrack(nextIndex);
             });
-        };
 
-        const toggleLike = async (songId) => {
-            const docRef = doc(db, `/artifacts/${appId}/users/${userId}/liked_songs`, 'likes');
-            try {
-                let newLikedSongs = Array.from(likedSongs);
-                if (likedSongs.has(songId)) {
-                    // Unlike the song
-                    newLikedSongs = newLikedSongs.filter(id => id !== songId);
-                } else {
-                    // Like the song
-                    newLikedSongs.push(songId);
-                }
-                await setDoc(docRef, { songIds: newLikedSongs }, { merge: true });
-                console.log("Like status updated for song:", songId);
-            } catch (e) {
-                console.error("Error toggling like status:", e);
-            }
-        };
+            prevBtn.addEventListener('click', () => {
+                const prevIndex = (currentTrackIndex - 1 + songs.length) % songs.length;
+                playTrack(prevIndex);
+            });
 
-        // Telegram mini app functions
-        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-        }
+            // Update progress bar
+            audio.addEventListener('timeupdate', () => {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            });
+            
+            audio.addEventListener('loadedmetadata', () => {
+                durationEl.textContent = formatTime(audio.duration);
+            });
+
+            // Seek functionality
+            progressBarContainer.addEventListener('click', (e) => {
+                const clickX = e.offsetX;
+                const containerWidth = progressBarContainer.offsetWidth;
+                const seekTime = (clickX / containerWidth) * audio.duration;
+                audio.currentTime = seekTime;
+            });
+            
+            fetchCardData();
+            fetchPlaylistData();
+        });
     </script>
 </body>
 </html>
-
-
-
-
-
