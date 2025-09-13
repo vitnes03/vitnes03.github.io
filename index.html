@@ -74,13 +74,33 @@
             <div id="user-id" class="text-sm text-gray-400 truncate max-w-[150px]"></div>
         </div>
 
-        <!-- Scrollable Song List -->
-        <div id="song-list" class="scrollable-list flex-grow overflow-y-auto space-y-2 mb-20 pb-4 rounded-xl">
-            <div id="loading" class="text-center text-gray-400 mt-8">Загрузка музыки...</div>
+        <!-- Start Button -->
+        <div id="start-screen" class="flex-grow flex flex-col items-center justify-center text-center">
+            <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">Начать радио</button>
+            <p class="mt-4 text-gray-400">Нажмите, чтобы начать бесконечный поток музыки.</p>
+        </div>
+
+        <!-- Main Content (Hidden until start) -->
+        <div id="main-content" class="flex-grow flex flex-col hidden">
+            <!-- Tabs for Navigation -->
+            <div class="flex justify-around mb-4 bg-gray-800 rounded-lg p-1">
+                <button id="radio-tab" class="flex-1 py-2 px-4 rounded-lg text-center font-medium bg-gray-700 text-white">Радио</button>
+                <button id="liked-tab" class="flex-1 py-2 px-4 rounded-lg text-center font-medium text-gray-400">Понравившееся</button>
+            </div>
+
+            <!-- Radio View -->
+            <div id="radio-view" class="scrollable-list flex-grow overflow-y-auto space-y-2 mb-20 pb-4 rounded-xl">
+                <div id="loading-radio" class="text-center text-gray-400 mt-8">Загрузка музыки...</div>
+            </div>
+
+            <!-- Liked Songs View -->
+            <div id="liked-view" class="scrollable-list flex-grow overflow-y-auto space-y-2 mb-20 pb-4 rounded-xl hidden">
+                <div id="loading-liked" class="text-center text-gray-400 mt-8">Загрузка...</div>
+            </div>
         </div>
 
         <!-- Music Player Bar -->
-        <div class="player-bar fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto p-4 flex items-center justify-between rounded-t-2xl shadow-lg">
+        <div id="player-bar" class="player-bar fixed bottom-0 left-0 right-0 w-full max-w-lg mx-auto p-4 flex items-center justify-between rounded-t-2xl shadow-lg hidden">
             <div class="flex items-center space-x-4">
                 <div class="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-lg font-bold">
                     <img id="current-song-art" src="https://placehold.co/64x64/262626/808080?text=♫" alt="Album Art" class="rounded-lg">
@@ -108,8 +128,16 @@
             window.firebaseInit();
         });
 
-        const songListEl = document.getElementById('song-list');
-        const loadingEl = document.getElementById('loading');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const mainContent = document.getElementById('main-content');
+        const playerBar = document.getElementById('player-bar');
+        const radioTab = document.getElementById('radio-tab');
+        const likedTab = document.getElementById('liked-tab');
+        const radioView = document.getElementById('radio-view');
+        const likedView = document.getElementById('liked-view');
+        const loadingRadioEl = document.getElementById('loading-radio');
+        const loadingLikedEl = document.getElementById('loading-liked');
         const playPauseBtn = document.getElementById('play-pause-btn');
         const playIcon = document.getElementById('play-icon');
         const pauseIcon = document.getElementById('pause-icon');
@@ -130,6 +158,22 @@
         window.initializeApp = (firestoreDb, currentUserId) => {
             db = firestoreDb;
             userId = currentUserId;
+            
+            // Listeners for tabs
+            radioTab.addEventListener('click', () => {
+                showView('radio');
+            });
+
+            likedTab.addEventListener('click', () => {
+                showView('liked');
+            });
+            
+            startBtn.addEventListener('click', () => {
+                startScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                playerBar.classList.remove('hidden');
+                fetchNextSong(true);
+            });
 
             // Set up real-time listener for user's liked songs
             const userLikesPath = `/artifacts/${appId}/users/${userId}/liked_songs`;
@@ -139,7 +183,8 @@
                 if (docSnap.exists()) {
                     likedSongs = new Set(docSnap.data().songIds || []);
                     console.log("Updated liked songs from Firestore:", likedSongs);
-                    renderSongList(); // Re-render the list to update like buttons
+                    renderSongList(playlist, radioView, 'radio');
+                    fetchLikedSongs(); // Fetch and render liked songs
                 } else {
                     console.log("No liked songs document found for this user. Creating a new one.");
                     likedSongs = new Set();
@@ -149,21 +194,49 @@
                 console.error("Error listening to liked songs:", error);
             });
             
-            // Start fetching the first song
-            fetchNextSong();
-
             // Setup audio player
             audioPlayer.volume = 0.5;
             audioPlayer.loop = false;
             audioPlayer.addEventListener('ended', () => {
-                fetchNextSong(); // Play next song from API when current one ends
+                fetchNextSong(true); // Play next song from API when current one ends
+            });
+
+            // Player controls
+            playPauseBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    audioPlayer.pause();
+                    isPlaying = false;
+                } else {
+                    audioPlayer.play();
+                    isPlaying = true;
+                }
+                updatePlayerUI();
             });
         };
 
-        const fetchNextSong = async () => {
+        const showView = (viewName) => {
+            radioView.classList.add('hidden');
+            likedView.classList.add('hidden');
+            radioTab.classList.remove('bg-gray-700', 'text-white');
+            likedTab.classList.remove('bg-gray-700', 'text-white');
+            radioTab.classList.add('text-gray-400');
+            likedTab.classList.add('text-gray-400');
+
+            if (viewName === 'radio') {
+                radioView.classList.remove('hidden');
+                radioTab.classList.add('bg-gray-700', 'text-white');
+                radioTab.classList.remove('text-gray-400');
+            } else if (viewName === 'liked') {
+                likedView.classList.remove('hidden');
+                likedTab.classList.add('bg-gray-700', 'text-white');
+                likedTab.classList.remove('text-gray-400');
+            }
+        };
+
+        const fetchNextSong = async (autoplay = false) => {
             if (isFetching) return;
             isFetching = true;
-            loadingEl.style.display = 'block';
+            loadingRadioEl.style.display = 'block';
 
             try {
                 // Fetch a new song from Pixabay's AUDIO API
@@ -181,20 +254,56 @@
                     id: track.id.toString(),
                     title: track.tags,
                     artist: track.user,
-                    // Use the `preview_url` which is a proper audio file
                     audioUrl: track.previewURL 
                 };
 
                 // Add the new song to the playlist and play it
-                playlist.push(newSong);
-                playCurrentSong(newSong);
+                playlist.unshift(newSong); // Add to the beginning of the list
+                if (autoplay) {
+                    playCurrentSong(newSong);
+                }
 
             } catch (error) {
                 console.error("Error fetching new song:", error);
-                loadingEl.textContent = 'Ошибка загрузки музыки. Попробуйте еще раз.';
+                loadingRadioEl.textContent = 'Ошибка загрузки музыки. Попробуйте еще раз.';
             } finally {
-                loadingEl.style.display = 'none';
+                loadingRadioEl.style.display = 'none';
                 isFetching = false;
+            }
+        };
+
+        const fetchLikedSongs = () => {
+            loadingLikedEl.style.display = 'block';
+            likedView.innerHTML = ''; // Clear liked songs list
+
+            // Since we only store IDs, we can't fetch the full song data
+            // In a real app, you would fetch the full song objects here
+            if (likedSongs.size > 0) {
+                 likedSongs.forEach(songId => {
+                    const songItem = document.createElement('div');
+                    songItem.className = `song-item p-4 rounded-xl flex items-center justify-between cursor-pointer bg-red-900`;
+                    songItem.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gray-700 rounded-lg flex-shrink-0">
+                                <img src="https://placehold.co/48x48/262626/808080?text=♫" alt="Album Art" class="rounded-lg">
+                            </div>
+                            <div class="flex-grow">
+                                <div class="text-lg font-medium">Песня ID: ${songId}</div>
+                                <div class="text-sm text-gray-400">Исполнитель...</div>
+                            </div>
+                        </div>
+                        <button class="like-btn p-2 rounded-full hover:bg-gray-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 like-icon like-button-filled">
+                                <path d="M12.923 2.25c-1.157 0-2.313.255-3.407.75l-1.472.645A4.47 4.47 0 0 0 6.3 3.992m-.75 16.5c0 1.242-1.008 2.25-2.25 2.25S1.05 20.492 1.05 19.25M15 9.75a.75.75 0 0 1 .75-.75H18a2.25 2.25 0 0 1 2.25 2.25v4.5A2.25 2.25 0 0 1 18 18h-2.25a.75.75 0 0 1-.75-.75V9.75Z" />
+                                <path d="m11.645 20.91-.007.003-.025.011a24.285 24.285 0 0 1-5.455 1.31A8.964 8.964 0 0 1 2.25 15.75V9.456c0-1.282.903-2.324 2.112-2.519 1.125-.175 2.28-.455 3.334-.823m3.056-11.666a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.456Z" />
+                            </svg>
+                        </button>
+                    `;
+                    likedView.appendChild(songItem);
+                 });
+                 loadingLikedEl.style.display = 'none';
+            } else {
+                loadingLikedEl.textContent = 'У вас пока нет понравившихся песен.';
             }
         };
 
@@ -203,35 +312,36 @@
             audioPlayer.play();
             isPlaying = true;
             updatePlayerUI(song);
-            renderSongList(); // Update the displayed list with the new song
+            renderSongList(playlist, radioView, 'radio');
         };
 
-        const updatePlayerUI = (song) => {
+        const updatePlayerUI = () => {
+            if (playlist.length === 0) {
+                currentSongTitleEl.textContent = 'Нет песен.';
+                currentSongArtistEl.textContent = '';
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                return;
+            }
+            const song = playlist[0];
             currentSongTitleEl.textContent = song.title;
             currentSongArtistEl.textContent = song.artist;
             playIcon.classList.toggle('hidden', isPlaying);
             pauseIcon.classList.toggle('hidden', !isPlaying);
         };
 
-        playPauseBtn.addEventListener('click', () => {
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-            } else {
-                audioPlayer.play();
-                isPlaying = true;
+        const renderSongList = (list, container, type) => {
+            container.innerHTML = '';
+            
+            if (list.length === 0) {
+                 const noSongsMessage = document.createElement('div');
+                 noSongsMessage.className = 'text-center text-gray-400 mt-8';
+                 noSongsMessage.textContent = type === 'radio' ? 'Загрузка музыки...' : 'У вас пока нет понравившихся песен.';
+                 container.appendChild(noSongsMessage);
+                 return;
             }
-            updatePlayerUI(playlist[playlist.length - 1]);
-        });
-
-        const renderSongList = () => {
-            // Clear existing songs except loading text
-            const songsToClear = songListEl.querySelectorAll('.song-item');
-            songsToClear.forEach(el => el.remove());
-
-            if (playlist.length === 0) return;
-
-            playlist.forEach(song => {
+            
+            list.forEach(song => {
                 const isLiked = likedSongs.has(song.id);
                 const songItem = document.createElement('div');
                 songItem.className = `song-item p-4 rounded-xl flex items-center justify-between cursor-pointer ${isLiked ? 'bg-red-900' : 'bg-gray-800'}`;
@@ -259,7 +369,7 @@
                     e.stopPropagation();
                     toggleLike(song.id);
                 });
-                songListEl.appendChild(songItem);
+                container.appendChild(songItem);
             });
         };
 
@@ -289,6 +399,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
